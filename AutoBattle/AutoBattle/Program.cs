@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Text;
 using static AutoBattle.Character;
 using static AutoBattle.Grid;
 using System.Collections.Generic;
@@ -11,20 +12,24 @@ namespace AutoBattle
     {
         static void Main(string[] args)
         {
-            Grid grid = new Grid(5, 5);
-            CharacterClass playerCharacterClass;
-            GridBox PlayerCurrentLocation;
-            GridBox EnemyCurrentLocation;
-            Character PlayerCharacter;
-            Character EnemyCharacter;
-            List<Character> AllPlayers = new List<Character>();
-            int currentTurn = 0;
-            int numberOfPossibleTiles = grid.grids.Count;
+            Grid grid;
+            //CharacterClass playerCharacterClass;
+            //GridBox PlayerCurrentLocation;
+            //GridBox EnemyCurrentLocation;
+            Character playerCharacter;
+            Character enemyCharacter;
+            List<Character> allPlayers;
+            int currentTurn;
+            int numberOfPossibleTiles;
             Setup(); 
 
 
             void Setup()
             {
+                grid = GetGrid();
+                numberOfPossibleTiles = grid.grids.Count;
+                allPlayers = new List<Character>();
+                currentTurn = 0;
 
                 GetPlayerChoice();
             }
@@ -33,39 +38,51 @@ namespace AutoBattle
             {
                 //asks for the player to choose between for possible classes via console.
                 Console.WriteLine("Choose Between One of this Classes:\n");
-                Console.WriteLine("[1] Paladin, [2] Warrior, [3] Cleric, [4] Archer");
+
+                StringBuilder characterClassOptions = new StringBuilder();
+
+                string[] characterClassNames = Enum.GetNames(typeof(CharacterClass));
+                foreach(string name in characterClassNames)
+                {
+                    string classNumber = ((uint)Enum.Parse(typeof(CharacterClass),name)).ToString();
+                    characterClassOptions.Append($"[{classNumber}] {name}, ");
+                }
+                //removing ", " at the end
+                characterClassOptions.Remove(characterClassOptions.Length-2, 2);
+                Console.WriteLine(characterClassOptions);
+
                 //store the player choice in a variable
                 string choice = Console.ReadLine();
 
-                switch (choice)
+                UInt32 choiceInt = 0;
+                bool isValidValue = UInt32.TryParse(choice, out choiceInt) && Enum.IsDefined(typeof(CharacterClass), choiceInt);
+
+                if (isValidValue)
                 {
-                    case "1":
-                        CreatePlayerCharacter(Int32.Parse(choice));
-                        break;
-                    case "2":
-                        CreatePlayerCharacter(Int32.Parse(choice));
-                        break;
-                    case "3":
-                        CreatePlayerCharacter(Int32.Parse(choice));
-                        break;
-                    case "4":
-                        CreatePlayerCharacter(Int32.Parse(choice));
-                        break;
-                    default:
-                        GetPlayerChoice();
-                        break;
+                    CreatePlayerCharacter((CharacterClass)UInt32.Parse(choice));
                 }
+                else
+                {
+                    Console.WriteLine($"Undefined class for value: {choice}");
+                    GetPlayerChoice();
+                }
+
             }
 
-            void CreatePlayerCharacter(int classIndex)
+            Grid GetGrid()
+            {
+                //TODO: Implement variable grid size
+                return new Grid(5, 5);
+            }
+            void CreatePlayerCharacter(CharacterClass characterClass)
             {
                
-                CharacterClass characterClass = (CharacterClass)classIndex;
+                //CharacterClass characterClass = (CharacterClass)classIndex;
                 Console.WriteLine($"Player Class Choice: {characterClass}");
-                PlayerCharacter = new Character(characterClass);
-                PlayerCharacter.Health = 100;
-                PlayerCharacter.BaseDamage = 20;
-                PlayerCharacter.PlayerIndex = 0;
+                playerCharacter = new Character(characterClass);
+                playerCharacter.Health = 100;
+                playerCharacter.BaseDamage = 20;
+                playerCharacter.PlayerIndex = 0;
                 
                 CreateEnemyCharacter();
 
@@ -78,10 +95,10 @@ namespace AutoBattle
                 int randomInteger = rand.Next(1, 4);
                 CharacterClass enemyClass = (CharacterClass)randomInteger;
                 Console.WriteLine($"Enemy Class Choice: {enemyClass}");
-                EnemyCharacter = new Character(enemyClass);
-                EnemyCharacter.Health = 100;
-                PlayerCharacter.BaseDamage = 20;
-                PlayerCharacter.PlayerIndex = 1;
+                enemyCharacter = new Character(enemyClass);
+                enemyCharacter.Health = 100;
+                playerCharacter.BaseDamage = 20;
+                playerCharacter.PlayerIndex = 1;
                 StartGame();
 
             }
@@ -89,10 +106,10 @@ namespace AutoBattle
             void StartGame()
             {
                 //populates the character variables and targets
-                EnemyCharacter.Target = PlayerCharacter;
-                PlayerCharacter.Target = EnemyCharacter;
-                AllPlayers.Add(PlayerCharacter);
-                AllPlayers.Add(EnemyCharacter);
+                enemyCharacter.Target = playerCharacter;
+                playerCharacter.Target = enemyCharacter;
+                allPlayers.Add(playerCharacter);
+                allPlayers.Add(enemyCharacter);
                 AlocatePlayers();
                 StartTurn();
 
@@ -105,7 +122,7 @@ namespace AutoBattle
                     //AllPlayers.Sort();  
                 }
 
-                foreach(Character character in AllPlayers)
+                foreach(Character character in allPlayers)
                 {
                     character.StartTurn(grid);
                 }
@@ -116,10 +133,10 @@ namespace AutoBattle
 
             void HandleTurn()
             {
-                if(PlayerCharacter.Health == 0)
+                if(playerCharacter.Health == 0)
                 {
                     return;
-                } else if (EnemyCharacter.Health == 0)
+                } else if (enemyCharacter.Health == 0)
                 {
                     Console.Write(Environment.NewLine + Environment.NewLine);
 
@@ -162,7 +179,7 @@ namespace AutoBattle
                     GridBox PlayerCurrentLocation = RandomLocation;
                     RandomLocation.ocupied = true;
                     grid.grids[random] = RandomLocation;
-                    PlayerCharacter.currentBox = grid.grids[random];
+                    playerCharacter.currentBox = grid.grids[random];
                     AlocateEnemyCharacter();
                 } else
                 {
@@ -177,10 +194,10 @@ namespace AutoBattle
                 Console.Write($"{random}\n");
                 if (!RandomLocation.ocupied)
                 {
-                    EnemyCurrentLocation = RandomLocation;
+                    //EnemyCurrentLocation = RandomLocation;
                     RandomLocation.ocupied = true;
                     grid.grids[random] = RandomLocation;
-                    EnemyCharacter.currentBox = grid.grids[random];
+                    enemyCharacter.currentBox = grid.grids[random];
                     grid.drawBattlefield(5 , 5);
                 }
                 else
