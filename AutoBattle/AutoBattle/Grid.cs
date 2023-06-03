@@ -15,16 +15,19 @@ namespace AutoBattle
         {
             xLenght = Lines;
             yLength = Columns;
-            Console.WriteLine("The battle field has been created\n");
+
+            Console.WriteLine("Creating battle field\n");
             for (int i = 0; i < Lines; i++)
             {
-                    grids.Add(newBox);
+                    
                 for(int j = 0; j < Columns; j++)
                 {
                     GridBox newBox = new GridBox(j, i, false, (Columns * i + j));
+                    grids.Add(newBox);
                     Console.Write($"{newBox.Index}\n");
                 }
             }
+            Console.WriteLine("The battle field has been created\n");
         }
 
         // prints the matrix that indicates the tiles of the battlefield
