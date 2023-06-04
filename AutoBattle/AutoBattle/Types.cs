@@ -6,6 +6,26 @@ namespace AutoBattle
 {
     public class Types
     {
+        public enum CharacterClass : uint
+        {
+            Paladin = 1,
+            Warrior = 2,
+            Cleric = 3,
+            Archer = 4,
+            Assassin = 6
+        }
+        public static KeyValuePair<string, uint>[] GetCharacterClasses()
+        {
+            List<KeyValuePair<string, uint>> classList = new List<KeyValuePair<string, uint>>();
+
+            string[] characterClassNames = Enum.GetNames(typeof(CharacterClass));
+            foreach(string name in characterClassNames)
+            {
+                classList.Add(new KeyValuePair<string, uint>(name, (uint)Enum.Parse(typeof(CharacterClass), name)));
+            }
+
+            return classList.ToArray();
+        }
 
         public struct CharacterClassSpecific
         {
@@ -14,21 +34,15 @@ namespace AutoBattle
             float ClassDamage;
             CharacterSkills[] skills;
 
-        }
-
-        public struct GridCell
+        }        
+        
+        public struct CharacterSkills
         {
-            public Character occupied;
-            public int Index;
-            public Vector2Int position;
-            public GridCell(int x, int y, Character occupied, int index)
-            {
-                this.occupied = occupied;
-                this.Index = index;
-                position = new Vector2Int(x, y);
-            }
-
+            string Name;
+            float damage;
+            float damageMultiplier;
         }
+
         public struct Vector2Int
         {
             public int x;
@@ -100,33 +114,20 @@ namespace AutoBattle
             }
 
         }
-        public struct CharacterSkills
-        {
-            string Name;
-            float damage;
-            float damageMultiplier;
-        }
 
-        public enum CharacterClass : uint
+        public class GridCell
         {
-            Paladin = 1,
-            Warrior = 2,
-            Cleric = 3,
-            Archer = 4,
-            Assassin = 6
-        }
-
-        public static KeyValuePair<string, uint>[] GetCharacterClasses()
-        {
-            List<KeyValuePair<string, uint>> classList = new List<KeyValuePair<string, uint>>();
-
-            string[] characterClassNames = Enum.GetNames(typeof(CharacterClass));
-            foreach(string name in characterClassNames)
+            public Character occupied;
+            public int Index;
+            public Vector2Int position;
+            public GridCell(int x, int y, Character occupied, int index)
             {
-                classList.Add(new KeyValuePair<string, uint>(name, (uint)Enum.Parse(typeof(CharacterClass), name)));
+                this.occupied = occupied;
+                this.Index = index;
+                position = new Vector2Int(x, y);
             }
 
-            return classList.ToArray();
         }
+        
     }
 }

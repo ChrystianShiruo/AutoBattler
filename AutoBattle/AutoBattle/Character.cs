@@ -10,7 +10,6 @@ namespace AutoBattle
     {
 
 
-        private string _name;
         private float _baseDamage;
         private float _damageMultiplier;
         private int _attackRange;
@@ -23,7 +22,7 @@ namespace AutoBattle
             Health = 100f;
             _baseDamage = 20f;
             PlayerIndex = id;
-            _name = $"{id}. {characterClass}";
+            Name = $"{id}. {characterClass}";
             _damageMultiplier = 1f;
             _attackRange = 1;
             _attackablePositions = CacheTargetablePositions(_attackRange);
@@ -31,8 +30,9 @@ namespace AutoBattle
             Color = (ConsoleColor)color;
         }
 
-        public float Health { get; private set; }
         public int PlayerIndex { get; private set; }
+        public string Name { get; private set; }
+        public float Health { get; private set; }
         public Vector2Int CurrentPosition { get; private set; }
         public ConsoleColor Color { get; private set; }
 
@@ -59,7 +59,11 @@ namespace AutoBattle
 
         public bool TakeDamage(float amount)
         {
-            if((Health -= _baseDamage) <= 0)
+            Health -= amount;
+            Console.ForegroundColor = Color;
+            Console.WriteLine($"Character {Name} is now with {Math.Max(Health, 0)} hp");
+            Console.ResetColor();
+            if(Health <= 0)
             {
                 Die();
                 return true;
@@ -72,16 +76,20 @@ namespace AutoBattle
         }
         public void Die()
         {
-            //TODO >> maybe kill him?
+            if(_grid.TryRemoveCharacter(CurrentPosition, this))
+            {
+                Console.WriteLine($"Character {Name} died!");
+                _grid.OnBattlefieldChanged();
+            }
         }
 
-        public void WalkTO(bool CanWalk)
-        {
-
-        }
 
         public void StartTurn()
         {
+            if(Health <= 0)
+            {
+                return;
+            }
             _target = CheckCloseTargets(_grid);
             if(_target != null)
             {
@@ -119,7 +127,7 @@ namespace AutoBattle
         {
             Vector2Int targetPosition = CurrentPosition;
             int distance = Vector2Int.Distance(new Vector2Int(0, 0), new Vector2Int(battlefield.XLenght, battlefield.YLength));//max possible distance
-            foreach(Character character in Program.AllPlayers)
+            foreach(Character character in Program.AliveCharacters)
             {
                 if(character == this)
                 {
@@ -147,11 +155,11 @@ namespace AutoBattle
             //battleField.MoveTowards(CurrentBox.position, targetPosition, 1).occupied = null;
             if(candidatePosition != CurrentPosition)
             {
-                Console.Write($"{_name} moved from [{CurrentPosition.x},{CurrentPosition.y}] to [{candidatePosition.x},{candidatePosition.y}]");
+                Console.Write($"{Name} moved from [{CurrentPosition.x},{CurrentPosition.y}] to [{candidatePosition.x},{candidatePosition.y}]");
                 //battleField.TryMoveCharacter(CurrentPosition, null);
                 //battleField.TryMoveCharacter(candidatePosition, this);
 
-                if(battleField.TryMoveCharacter(CurrentPosition,candidatePosition))
+                if(battleField.TryMoveCharacter(CurrentPosition, candidatePosition))
                 {
                     CurrentPosition = candidatePosition;
                     battleField.OnBattlefieldChanged();
@@ -161,11 +169,14 @@ namespace AutoBattle
                 //did not move
             }
         }
+
         public void Attack(Character target)
         {
             var rand = new Random();
-            target.TakeDamage(rand.Next(0, GetDamage()));
-            Console.WriteLine($"Player {PlayerIndex} is attacking the player {_target.PlayerIndex} and did {_baseDamage} damage\n");
+            float maxDamage = GetDamage();
+            float damageDealt = (float)rand.NextDouble() * maxDamage;
+            Console.WriteLine($"Character {PlayerIndex} is attacking character {target.PlayerIndex} and did {damageDealt} damage");
+            target.TakeDamage(damageDealt);
         }
 
         public enum ColorScheme

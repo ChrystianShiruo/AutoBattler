@@ -16,7 +16,7 @@ namespace AutoBattle
             OnBattlefieldChanged += DrawBattlefield;
             XLenght = Lines;
             YLength = Columns;
-            grids = new List<GridCell>();
+            //grids = new List<GridCell>();
             _grid2D = new GridCell[XLenght, YLength];
             Console.WriteLine("Creating battle field\n");
             for(int i = 0; i < Lines; i++)
@@ -25,18 +25,24 @@ namespace AutoBattle
                 for(int j = 0; j < Columns; j++)
                 {
                     GridCell newBox = new GridCell(i, j, null, (Columns * i + j));
-                    grids.Add(newBox);
+                    //grids.Add(newBox);
                     _grid2D[i, j] = newBox;
                     Console.Write($"{newBox.Index}\n");
                 }
             }
             Console.WriteLine("The battle field has been created\n");
         }
-        public List<GridCell> grids { get; private set; }
+        //public List<GridCell> grids { get; private set; }
         public int XLenght { get; private set; }
         public int YLength { get; private set; }
 
 
+
+        private void SetCellCharacter(Vector2Int vector2Int, Character character)
+        {
+            _grid2D[vector2Int.x, vector2Int.y].occupied = character;
+        }        
+        
         // prints the matrix that indicates the tiles of the battlefield
         public void DrawBattlefield()
         {
@@ -51,7 +57,7 @@ namespace AutoBattle
                         //if()
                         Character character = _grid2D[i, j].occupied;
                         Console.ForegroundColor = character.Color;
-                        Console.Write($"[{String.Format("{0:00}", character.PlayerIndex)},hp: {character.Health}]\t");
+                        Console.Write($"[{String.Format("{0:00}", character.PlayerIndex)}]\t");
                         Console.ResetColor();
                     } else
                     {
@@ -63,7 +69,10 @@ namespace AutoBattle
             Console.Write(Environment.NewLine + Environment.NewLine);
         }
 
-
+        public bool IsWithinBounds(int x, int y)
+        {
+            return (x >= 0 && y >= 0 && XLenght > x && YLength > y);
+        }
         public bool TryMoveCharacter(Vector2Int current, Vector2Int target)
         {
             if(_grid2D[current.x, current.y].occupied != null)
@@ -84,10 +93,16 @@ namespace AutoBattle
             }
             return false;
         }
-        public void SetCellCharacter(Vector2Int vector2Int, Character character)
+        public bool TryRemoveCharacter(Vector2Int position, Character character)
         {
-            _grid2D[vector2Int.x, vector2Int.y].occupied = character;
+            if(_grid2D[position.x, position.y].occupied == character)
+            {
+                SetCellCharacter(position, null);
+                return true;
+            }
+            return false;
         }
+
         public Character GetCellCharacter(Vector2Int vector2Int)
         {
             return GetCellCharacter(vector2Int.x, vector2Int.y);
@@ -101,15 +116,14 @@ namespace AutoBattle
 
             return _grid2D[x, y].occupied;
         }
-
-        public bool IsWithinBounds(Vector2Int vector2Int)
+        public GridCell GetCell(int x, int y)
         {
-            return IsWithinBounds(vector2Int.x, vector2Int.y);
-        }
-        public bool IsWithinBounds(int x, int y)
-        {
-            return (x >= 0 && y >= 0 && XLenght > x && YLength > y);
-        }
+            if(!IsWithinBounds(x, y))
+            {
+                return null;
+            }
+            return _grid2D[x, y];
+        }        
         public Vector2Int MoveTowards(Vector2Int start, Vector2Int target, int coveredDistance)
         {
 
