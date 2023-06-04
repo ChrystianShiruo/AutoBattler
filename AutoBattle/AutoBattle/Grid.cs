@@ -50,7 +50,7 @@ namespace AutoBattle
                     {
                         //if()
                         Character character = _grid2D[i, j].occupied;
-                        Console.ForegroundColor = ConsoleColor.Green;
+                        Console.ForegroundColor = character.Color;
                         Console.Write($"[{String.Format("{0:00}", character.PlayerIndex)},hp: {character.Health}]\t");
                         Console.ResetColor();
                     } else
@@ -64,9 +64,29 @@ namespace AutoBattle
         }
 
 
+        public bool TryMoveCharacter(Vector2Int current, Vector2Int target)
+        {
+            if(_grid2D[current.x, current.y].occupied != null)
+            {
+                _grid2D[target.x, target.y].occupied = _grid2D[current.x, current.y].occupied;
+                _grid2D[current.x, current.y].occupied = null;
+                return true;
+            }
+
+            return false;
+        }
+        public bool TrySetCharacter(Vector2Int position, Character character)
+        {
+            if(_grid2D[position.x, position.y].occupied == null)
+            {
+                SetCellCharacter(position, character);
+                return true;
+            }
+            return false;
+        }
         public void SetCellCharacter(Vector2Int vector2Int, Character character)
-        {            
-            _grid2D[vector2Int.x, vector2Int.y].occupied = character;            
+        {
+            _grid2D[vector2Int.x, vector2Int.y].occupied = character;
         }
         public Character GetCellCharacter(Vector2Int vector2Int)
         {
@@ -126,7 +146,7 @@ namespace AutoBattle
 
                 break;//could not fix way to get closer directly
             }
-            
+
             return _grid2D[newPosition.x, newPosition.y].position;
 
         }

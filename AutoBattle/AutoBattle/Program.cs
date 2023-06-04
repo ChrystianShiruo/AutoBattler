@@ -108,8 +108,8 @@ namespace AutoBattle
 
                 //CharacterClass characterClass = (CharacterClass)classIndex;
                 Console.WriteLine($"Player Class Choice: {characterClass}");
-                playerCharacter = new Character(characterClass, 0);
-
+                playerCharacter = new Character(characterClass, 0, ColorScheme.Player);
+                AllPlayers.Add(playerCharacter);
                 //CreateEnemyCharacter();
 
             }
@@ -121,7 +121,9 @@ namespace AutoBattle
                 int randomInteger = rand.Next(1, characterClasses.Length);
                 CharacterClass enemyClass = (CharacterClass)characterClasses[randomInteger].Value;
                 Console.WriteLine($"Enemy Class Choice: {enemyClass}");
-                enemyCharacter = new Character(enemyClass, 1);
+                enemyCharacter = new Character(enemyClass, 1, ColorScheme.Enemy);
+                AllPlayers.Add(enemyCharacter);
+
                 //StartGame();
 
             }
@@ -129,8 +131,7 @@ namespace AutoBattle
             void StartGame()
             {
 
-                AllPlayers.Add(playerCharacter);
-                AllPlayers.Add(enemyCharacter);
+
                 AlocatePlayers();
                 StartTurn();
 
@@ -147,7 +148,7 @@ namespace AutoBattle
 
                 foreach(Character character in AllPlayers)
                 {
-                    character.StartTurn(grid);
+                    character.StartTurn();
                 }
 
                 currentTurn++;
@@ -204,7 +205,7 @@ namespace AutoBattle
                     GridCell PlayerCurrentLocation = RandomLocation;
                     RandomLocation.occupied = playerCharacter;
                     grid.grids[random] = RandomLocation;
-                    playerCharacter.CurrentPosition = grid.grids[random].position;
+                    playerCharacter.PlaceOnGrid(grid, grid.grids[random].position);
                     AlocateEnemyCharacter();
                 } else
                 {
@@ -222,7 +223,7 @@ namespace AutoBattle
                     //EnemyCurrentLocation = RandomLocation;
                     RandomLocation.occupied = enemyCharacter;
                     grid.grids[random] = RandomLocation;
-                    enemyCharacter.CurrentPosition = grid.grids[random].position;
+                    enemyCharacter.PlaceOnGrid(grid, grid.grids[random].position);
                     grid.DrawBattlefield();
                 } else
                 {

@@ -9,7 +9,6 @@ namespace AutoBattle
     public class Character
     {
 
-        public Vector2Int CurrentPosition;
 
         private string _name;
         private float _baseDamage;
@@ -17,8 +16,9 @@ namespace AutoBattle
         private int _attackRange;
         private Character _target;
         private Vector2Int[] _attackablePositions;
+        private Grid _grid;
 
-        public Character(CharacterClass characterClass, int id)
+        public Character(CharacterClass characterClass, int id, ColorScheme color)
         {
             Health = 100f;
             _baseDamage = 20f;
@@ -27,10 +27,14 @@ namespace AutoBattle
             _damageMultiplier = 1f;
             _attackRange = 1;
             _attackablePositions = CacheTargetablePositions(_attackRange);
+            _grid = null;
+            Color = (ConsoleColor)color;
         }
 
         public float Health { get; private set; }
         public int PlayerIndex { get; private set; }
+        public Vector2Int CurrentPosition { get; private set; }
+        public ConsoleColor Color { get; private set; }
 
         //caching so that we only calculate when needed
         private Vector2Int[] CacheTargetablePositions(int range)
@@ -43,6 +47,14 @@ namespace AutoBattle
                     new Vector2Int(0,-i),new Vector2Int(0,i)});
             }
             return targetablePositionsList.ToArray();
+        }
+        public void PlaceOnGrid(Grid grid, Vector2Int position)
+        {
+            if(grid.TrySetCharacter(position, this))
+            {
+                _grid = grid;
+                CurrentPosition = position;
+            }
         }
 
         public bool TakeDamage(float amount)
@@ -68,9 +80,9 @@ namespace AutoBattle
 
         }
 
-        public void StartTurn(Grid battlefield)
+        public void StartTurn()
         {
-            _target = CheckCloseTargets(battlefield);
+            _target = CheckCloseTargets(_grid);
             if(_target != null)
             {
                 Attack(_target);
@@ -79,7 +91,7 @@ namespace AutoBattle
                 return;
             } else
             {
-                MoveTowards(FindNearestTargetPosition(battlefield), battlefield);
+                MoveTowards(FindNearestTargetPosition(_grid), _grid);
             }
         }
 
@@ -136,77 +148,31 @@ namespace AutoBattle
             if(candidatePosition != CurrentPosition)
             {
                 Console.Write($"{_name} moved from [{CurrentPosition.x},{CurrentPosition.y}] to [{candidatePosition.x},{candidatePosition.y}]");
-                battleField.SetCellCharacter(CurrentPosition, null);
-                //CurrentPosition.occupied = null;
-                battleField.SetCellCharacter(candidatePosition, this);
-                //candidatePosition.occupied = this;
-                CurrentPosition = candidatePosition;
-                Console.Write($"\n || {battleField.GetCellCharacter(candidatePosition.x, candidatePosition.y)} ||");
-                battleField.OnBattlefieldChanged();
+                //battleField.TryMoveCharacter(CurrentPosition, null);
+                //battleField.TryMoveCharacter(candidatePosition, this);
+
+                if(battleField.TryMoveCharacter(CurrentPosition,candidatePosition))
+                {
+                    CurrentPosition = candidatePosition;
+                    battleField.OnBattlefieldChanged();
+                }
             } else
             {
                 //did not move
             }
-
-            //if(battleField.Grid2D[candidatePosition.x, candidatePosition.y].occupied !=null)
-            //{
-
-            //}
-            // if there is no target close enough, calculates in wich direction this character should move to be closer to a possible target
-            //if(this.CurrentBox.xIndex > _target.CurrentBox.xIndex)
-            //{
-            //    if((battlefield.grids.Exists(x => x.Index == CurrentBox.Index - 1)))
-            //    {
-            //        CurrentBox.occupied = false;
-            //        battlefield.grids[CurrentBox.Index] = CurrentBox;
-            //        CurrentBox = (battlefield.grids.Find(x => x.Index == CurrentBox.Index - 1));
-            //        CurrentBox.occupied = true;
-            //        battlefield.grids[CurrentBox.Index] = CurrentBox;
-            //        Console.WriteLine($"Player {_playerIndex} walked left\n");
-            //        battlefield.DrawBattlefield();
-
-            //        return;
-            //    }
-            //} else if(CurrentBox.xIndex < _target.CurrentBox.xIndex)
-            //{
-            //    CurrentBox.occupied = false;
-            //    battlefield.grids[CurrentBox.Index] = CurrentBox;
-            //    CurrentBox = (battlefield.grids.Find(x => x.Index == CurrentBox.Index + 1));
-            //    CurrentBox.occupied = true;
-            //    return;
-            //    battlefield.grids[CurrentBox.Index] = CurrentBox;
-            //    Console.WriteLine($"Player {_playerIndex} walked right\n");
-            //    battlefield.DrawBattlefield();
-            //}
-
-            //if(this.CurrentBox.yIndex > _target.CurrentBox.yIndex)
-            //{
-            //    battlefield.DrawBattlefield();
-            //    this.CurrentBox.occupied = false;
-            //    battlefield.grids[CurrentBox.Index] = CurrentBox;
-            //    this.CurrentBox = (battlefield.grids.Find(x => x.Index == CurrentBox.Index - battlefield.XLenght));
-            //    this.CurrentBox.occupied = true;
-            //    battlefield.grids[CurrentBox.Index] = CurrentBox;
-            //    Console.WriteLine($"Player {_playerIndex} walked up\n");
-            //    return;
-            //} else if(this.CurrentBox.yIndex < _target.CurrentBox.yIndex)
-            //{
-            //    this.CurrentBox.occupied = true;
-            //    battlefield.grids[CurrentBox.Index] = this.CurrentBox;
-            //    this.CurrentBox = (battlefield.grids.Find(x => x.Index == CurrentBox.Index + battlefield.XLenght));
-            //    this.CurrentBox.occupied = false;
-            //    battlefield.grids[CurrentBox.Index] = CurrentBox;
-            //    Console.WriteLine($"Player {_playerIndex} walked down\n");
-            //    battlefield.DrawBattlefield();
-
-            //    return;
-            //}
         }
         public void Attack(Character target)
         {
             var rand = new Random();
             target.TakeDamage(rand.Next(0, GetDamage()));
             Console.WriteLine($"Player {PlayerIndex} is attacking the player {_target.PlayerIndex} and did {_baseDamage} damage\n");
+        }
+
+        public enum ColorScheme
+        {
+            Player = (int)ConsoleColor.Green,
+            Enemy = (int)ConsoleColor.Red,
+            Ally = (int)ConsoleColor.Cyan
         }
     }
 }
