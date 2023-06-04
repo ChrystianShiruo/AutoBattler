@@ -10,13 +10,12 @@ namespace AutoBattle
     {
         private GridCell[,] _grid2D;
 
-        public Action OnBattlefieldChanged;// TODO: call when moving, dying, killing etc
+        public Action OnBattlefieldChanged;
         public Grid(int Lines, int Columns)// TODO: change to uint
         {
             OnBattlefieldChanged += DrawBattlefield;
             XLenght = Lines;
             YLength = Columns;
-            //grids = new List<GridCell>();
             _grid2D = new GridCell[XLenght, YLength];
             Console.WriteLine("Creating battle field\n");
             for(int i = 0; i < Lines; i++)
@@ -25,14 +24,12 @@ namespace AutoBattle
                 for(int j = 0; j < Columns; j++)
                 {
                     GridCell newBox = new GridCell(i, j, null, (Columns * i + j));
-                    //grids.Add(newBox);
                     _grid2D[i, j] = newBox;
                     Console.Write($"{newBox.Index}\n");
                 }
             }
             Console.WriteLine("The battle field has been created\n");
         }
-        //public List<GridCell> grids { get; private set; }
         public int XLenght { get; private set; }
         public int YLength { get; private set; }
 
@@ -41,8 +38,8 @@ namespace AutoBattle
         private void SetCellCharacter(Vector2Int vector2Int, Character character)
         {
             _grid2D[vector2Int.x, vector2Int.y].occupied = character;
-        }        
-        
+        }
+
         // prints the matrix that indicates the tiles of the battlefield
         public void DrawBattlefield()
         {
@@ -51,14 +48,11 @@ namespace AutoBattle
             {
                 for(int j = 0; j < YLength; j++)
                 {
-                    //GridCell currentGrid = _grid2D[i,j];
                     if(_grid2D[i, j].occupied != null)
                     {
-                        //if()
                         Character character = _grid2D[i, j].occupied;
-                        Console.ForegroundColor = character.Color;
-                        Console.Write($"[{String.Format("{0:00}", character.PlayerIndex)}]\t");
-                        Console.ResetColor();
+
+                        Messages.ColoredWrite($"[{String.Format("{0:00}", character.PlayerIndex)}]\t", character.Color);
                     } else
                     {
                         Console.Write($"[{_grid2D[i, j].position.x},{_grid2D[i, j].position.y}]\t");
@@ -73,6 +67,7 @@ namespace AutoBattle
         {
             return (x >= 0 && y >= 0 && XLenght > x && YLength > y);
         }
+
         public bool TryMoveCharacter(Vector2Int current, Vector2Int target)
         {
             if(_grid2D[current.x, current.y].occupied != null)
@@ -81,9 +76,9 @@ namespace AutoBattle
                 _grid2D[current.x, current.y].occupied = null;
                 return true;
             }
-
             return false;
         }
+
         public bool TrySetCharacter(Vector2Int position, Character character)
         {
             if(_grid2D[position.x, position.y].occupied == null)
@@ -93,6 +88,7 @@ namespace AutoBattle
             }
             return false;
         }
+
         public bool TryRemoveCharacter(Vector2Int position, Character character)
         {
             if(_grid2D[position.x, position.y].occupied == character)
@@ -109,12 +105,8 @@ namespace AutoBattle
         }
         public Character GetCellCharacter(int x, int y)
         {
-            if(!IsWithinBounds(x, y))
-            {
-                return null;
-            }
-
-            return _grid2D[x, y].occupied;
+            GridCell gridCell = GetCell(x, y);
+            return (gridCell != null ? gridCell.occupied : null);
         }
         public GridCell GetCell(int x, int y)
         {
@@ -123,12 +115,18 @@ namespace AutoBattle
                 return null;
             }
             return _grid2D[x, y];
-        }        
+        }
+
+        /// <summary>
+        /// Moves on the X and Y axis until it reaches the target, cannot move directy closer to the target on X and Y, or moves coveredDistance. Does not move diagonally.
+        /// </summary>
+        /// <param name="start"></param>
+        /// <param name="target"></param>
+        /// <param name="coveredDistance"></param>
+        /// <returns></returns>
         public Vector2Int MoveTowards(Vector2Int start, Vector2Int target, int coveredDistance)
         {
 
-
-            Vector2Int relativePosition = target - start;
             Vector2Int newPosition = start;
             for(int i = 0; i < coveredDistance; i++)
             {
@@ -140,7 +138,6 @@ namespace AutoBattle
                 if(newPosition.x != target.x)
                 {
                     Vector2Int newCandidatePosition = new Vector2Int(newPosition.x + Math.Sign(target.x - newPosition.x), newPosition.y);
-                    //Vector2Int newCandidatePosition = new Vector2Int(Math.Sign(newPosition.x - target.x ), newPosition.y);
                     if(GetCellCharacter(newCandidatePosition) == null)//not occupied
                     {
                         newPosition = newCandidatePosition;
@@ -150,7 +147,6 @@ namespace AutoBattle
                 if(newPosition.y != target.y)
                 {
                     Vector2Int newCandidatePosition = new Vector2Int(newPosition.x, newPosition.y + Math.Sign(target.y - newPosition.y));
-                    //Vector2Int newCandidatePosition = new Vector2Int(newPosition.x, Math.Sign(newPosition.y - target.y));
                     if(GetCellCharacter(newCandidatePosition) == null)//not occupied
                     {
                         newPosition = newCandidatePosition;
@@ -158,11 +154,10 @@ namespace AutoBattle
                     }
                 }
 
-                break;//could not fix way to get closer directly
+                break;//could not find way to get closer directly
             }
 
             return _grid2D[newPosition.x, newPosition.y].position;
-
         }
     }
 

@@ -36,7 +36,7 @@ namespace AutoBattle
         public Vector2Int CurrentPosition { get; private set; }
         public ConsoleColor Color { get; private set; }
 
-        //caching so that we only calculate when needed
+        //caching so that we do not recalculate
         private Vector2Int[] CacheTargetablePositions(int range)
         {
             List<Vector2Int> targetablePositionsList = new List<Vector2Int>();
@@ -48,6 +48,7 @@ namespace AutoBattle
             }
             return targetablePositionsList.ToArray();
         }
+
         public void PlaceOnGrid(Grid grid, Vector2Int position)
         {
             if(grid.TrySetCharacter(position, this))
@@ -60,9 +61,8 @@ namespace AutoBattle
         public bool TakeDamage(float amount)
         {
             Health -= amount;
-            Console.ForegroundColor = Color;
-            Console.WriteLine($"Character {Name} is now with {Math.Max(Health, 0)} hp");
-            Console.ResetColor();
+            Messages.ColoredWriteLine($"Character {Name} is now with {Math.Max(Health, 0)} hp", Color);
+
             if(Health <= 0)
             {
                 Die();
@@ -78,7 +78,7 @@ namespace AutoBattle
         {
             if(_grid.TryRemoveCharacter(CurrentPosition, this))
             {
-                Console.WriteLine($"Character {Name} died!");
+                Messages.ColoredWriteLine($"Character {Name} died!", Color);
                 _grid.OnBattlefieldChanged();
             }
         }
@@ -90,23 +90,23 @@ namespace AutoBattle
             {
                 return;
             }
+            Messages.ColoredWriteLine($"{Name} is acting...", Color);
             _target = CheckCloseTargets(_grid);
             if(_target != null)
             {
                 Attack(_target);
-
-
                 return;
             } else
             {
                 MoveTowards(FindNearestTargetPosition(_grid), _grid);
             }
+            Messages.ColoredWriteLine($"{Name} finished his turn.", Color);
+
         }
 
         // Check in x and y directions if there is any character close enough to be a target.
         private Character CheckCloseTargets(Grid battlefield)
         {
-            //check if current target is within range
             if(_target != null && _attackRange >= Vector2Int.Distance(_target.CurrentPosition, CurrentPosition))
             {
                 return _target;
@@ -143,27 +143,21 @@ namespace AutoBattle
 
             return targetPosition;
         }
-        private void MoveTowards(Vector2Int targetPosition, Grid battleField)
+        private void MoveTowards(Vector2Int targetPosition, Grid battleField)//TODO: create & implement _movementRange
         {
             if(targetPosition == CurrentPosition)
             {
                 return;
             }
 
-            //Vector2Int candidatePosition = Vector2Int.MoveTowards(CurrentBox.position, targetPosition, 1);//TODO: create & implement _movementRange
-            Vector2Int candidatePosition = battleField.MoveTowards(CurrentPosition, targetPosition, 1);//TODO: create & implement _movementRange
-            //battleField.MoveTowards(CurrentBox.position, targetPosition, 1).occupied = null;
-            if(candidatePosition != CurrentPosition)
+            Vector2Int candidatePosition = battleField.MoveTowards(CurrentPosition, targetPosition, 1);
+            if(candidatePosition != CurrentPosition && battleField.TryMoveCharacter(CurrentPosition, candidatePosition))
             {
-                Console.Write($"{Name} moved from [{CurrentPosition.x},{CurrentPosition.y}] to [{candidatePosition.x},{candidatePosition.y}]");
-                //battleField.TryMoveCharacter(CurrentPosition, null);
-                //battleField.TryMoveCharacter(candidatePosition, this);
+                Messages.ColoredWriteLine
+                    ($"{Name} moved from [{CurrentPosition.x},{CurrentPosition.y}] to [{candidatePosition.x},{candidatePosition.y}]", Color);
 
-                if(battleField.TryMoveCharacter(CurrentPosition, candidatePosition))
-                {
-                    CurrentPosition = candidatePosition;
-                    battleField.OnBattlefieldChanged();
-                }
+                CurrentPosition = candidatePosition;
+                battleField.OnBattlefieldChanged();
             } else
             {
                 //did not move
@@ -175,7 +169,12 @@ namespace AutoBattle
             var rand = new Random();
             float maxDamage = GetDamage();
             float damageDealt = (float)rand.NextDouble() * maxDamage;
-            Console.WriteLine($"Character {PlayerIndex} is attacking character {target.PlayerIndex} and did {damageDealt} damage");
+
+            Messages.ColoredWrite($"Character {Name}", Color);
+            Console.Write(" is attacking ");
+            Messages.ColoredWrite($"Character {target.Name}", target.Color);
+            Console.Write($" and did {damageDealt} damage \n");
+
             target.TakeDamage(damageDealt);
         }
 

@@ -14,26 +14,23 @@ namespace AutoBattle
         static void Main(string[] args)
         {
             Grid grid;
-            //CharacterClass playerCharacterClass;
-            //GridBox PlayerCurrentLocation;
-            //GridBox EnemyCurrentLocation;
-            //Character character;
-            //Character enemyCharacter;
+
             int currentTurn;
             int numberOfPossibleTiles;
+            int totalCharacterCount;
             KeyValuePair<string, uint>[] characterClasses;
             Setup();
 
             void Setup()
             {
+                totalCharacterCount = 2;
                 grid = GetGrid();
                 numberOfPossibleTiles = grid.XLenght * grid.YLength;
                 AliveCharacters = new List<Character>();
                 currentTurn = 0;
                 //caching Character classes for easy access
                 characterClasses = Types.GetCharacterClasses();
-                CreateCharacter(GetPlayerChoice(), ColorScheme.Player);
-                CreateEnemyCharacter();
+                CreateCharacters();
 
                 StartGame();
             }
@@ -80,6 +77,12 @@ namespace AutoBattle
                 GetUint("Select Line count:", out x);
                 GetUint("Select Collumn count:", out y);
 
+                if(x * y < totalCharacterCount)
+                {
+                    Console.WriteLine($"battlefield is too small for {totalCharacterCount} characters.\n");
+                    return GetGrid();
+                }
+
                 return new Grid((int)x, (int)y);
 
                 void GetUint(string requestText, out uint i)
@@ -96,7 +99,11 @@ namespace AutoBattle
             }
 
 
-
+            void CreateCharacters()
+            {
+                CreateCharacter(GetPlayerChoice(), ColorScheme.Player);
+                CreateEnemyCharacter();
+            }
             void CreateCharacter(CharacterClass characterClass, ColorScheme color)
             {
                 Console.WriteLine($"Character {AliveCharacters.Count} Class Choice: {characterClass}");
@@ -120,22 +127,19 @@ namespace AutoBattle
 
             void StartTurn()
             {
+                Console.Write(Environment.NewLine + Environment.NewLine);
+                Console.WriteLine("Click on any key to start the next turn...\n");
+                Console.Write(Environment.NewLine + Environment.NewLine);
 
-                if(currentTurn == 0)
-                {
-                    //AllPlayers.Sort();  
-                }
+                ConsoleKeyInfo key = Console.ReadKey();
+
+                currentTurn++;
+
                 Console.WriteLine($"\nStarting turn {currentTurn}...");
-
-                //foreach(Character character in AlivePlayers)
-                //{
-                //    character.StartTurn();
-                //}
                 AliveCharacters.ForEach(character => character.StartTurn());
 
 
                 HandleTurn();
-                currentTurn++;
             }
 
             void HandleTurn()
@@ -164,26 +168,9 @@ namespace AutoBattle
                 Console.WriteLine($"Turn {currentTurn} summary: \n");
                 foreach(Character character in AliveCharacters)
                 {
-                    Console.ForegroundColor = character.Color;
-                    Console.WriteLine($"{character.Name} hp: { character.Health.ToString("F2")}");
-                    Console.ResetColor();
+                    Messages.ColoredWriteLine($"{character.Name} hp: { character.Health.ToString("F2")}", character.Color);
                 }
-                //else if(enemyCharacter.Health == 0)
-                //{
-                //    Console.Write(Environment.NewLine + Environment.NewLine);
-
-                //    // endgame?
-
-                //    Console.Write(Environment.NewLine + Environment.NewLine);
-
-                //    return;
-                //}
-
-                Console.Write(Environment.NewLine + Environment.NewLine);
-                Console.WriteLine("Click on any key to start the next turn...\n");
-                Console.Write(Environment.NewLine + Environment.NewLine);
-
-                ConsoleKeyInfo key = Console.ReadKey();
+               
                 StartTurn();
 
             }
@@ -199,30 +186,40 @@ namespace AutoBattle
                 }
                 AliveCharacters = newCharacterList;
             }
-            int GetRandomInt(int min, int max)
+
+            List<T> Shuffle<T>(List<T> list)
             {
-                var rand = new Random();
-                int index = rand.Next(min, max);
-                return index;
+
+                List<T> temp = new List<T>();
+
+                Random rand = new Random();
+                for(int i = list.Count; i > 0; i--)
+                {
+                    int randomValue = rand.Next(0, i);
+                    temp.Add(list[randomValue]);
+                    list.RemoveAt(randomValue);
+                }
+
+                return temp;
             }
 
             void AlocatePlayers()
             {
-                //AlocatePlayerCharacter();
+                Console.WriteLine("Shuffling character order...\n");
+                //Randomizing characters order
+                AliveCharacters = Shuffle(AliveCharacters);
                 AliveCharacters.ForEach(character => AllocatePlayers(character));
             }
             void AllocatePlayers(Character character)
             {
                 int randomX = new Random().Next(0, grid.XLenght);
                 int randomY = new Random().Next(0, grid.YLength);
-                //GridCell RandomLocation = grid.GetCell(randomX, randomY);
-                //GridCell RandomLocation = grid.GetCell(randomX, randomY);
+
 
                 if(grid.GetCellCharacter(randomX, randomY) == null)
                 {
-                    Console.Write($"Allocating {character.Name} to position [{randomX},{randomY}]\n");
-                    //RandomLocation.occupied = character;
-                    //grid.grids[random] = RandomLocation;
+                    Messages.ColoredWriteLine($"Allocating {character.Name} to position [{randomX},{randomY}]\n", character.Color);
+                    //Console.Write($"Allocating {character.Name} to position [{randomX},{randomY}]\n");
                     character.PlaceOnGrid(grid, new Vector2Int(randomX, randomY));
 
                 } else

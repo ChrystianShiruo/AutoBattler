@@ -56,47 +56,10 @@ namespace AutoBattle
             public static int Distance(Vector2Int vectorA, Vector2Int vectorB)
             {
                 int distance = 0;
-
                 distance += Math.Abs(vectorA.x - vectorB.x);
                 distance += Math.Abs(vectorA.y - vectorB.y);
-
                 return distance;
-            }
-
-            /// <summary>
-            /// Moves on the X and Y axis until it reaches target or moves coveredDistance. Does not move diagonally.
-            /// </summary>
-            /// <param name="start"></param>
-            /// <param name="target"></param>
-            /// <param name="coveredDistance"></param>
-            /// <returns></returns>
-            public static Vector2Int MoveTowards(Vector2Int start, Vector2Int target, int coveredDistance)// TODO: remove if unused
-            {
-                //if(start == target) Faster to not have this most of the time, lets trust method caller :), we return before iterating loop anyway
-                //{
-                //    return start;
-                //}
-
-                Vector2Int relativePosition = target - start;
-                Vector2Int newPosition = start;
-                for(int i = 0; i < coveredDistance; i++)
-                {
-                    if(newPosition == target)
-                    {
-                        break;
-                    }
-
-                    if(newPosition.x != target.x && true)
-                    {
-                        newPosition = new Vector2Int(Math.Sign(target.x - newPosition.x), newPosition.y);
-                    } else
-                    {
-                        newPosition = new Vector2Int(newPosition.x, Math.Sign(target.y - newPosition.y));
-                    }
-                }
-
-                return newPosition;
-            }
+            }           
 
             public static bool operator ==(Vector2Int vectorA, Vector2Int vectorB)
             {
@@ -112,7 +75,6 @@ namespace AutoBattle
             {
                 return new Vector2Int(vectorA.x - vectorB.x, vectorA.y - vectorB.y);
             }
-
         }
 
         public class GridCell
