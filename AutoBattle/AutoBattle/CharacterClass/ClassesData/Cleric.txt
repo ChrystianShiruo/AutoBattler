@@ -1,0 +1,16 @@
+json={
+              "characterClass": 1,
+              "hpModifier": 50.0,
+              "classDamage": 30.0,
+              "attackRange": 1,
+              "skills": [
+                {
+                  "name": "Heal",
+                  "description": "Heal lowest healt ally",
+                  "damage": 45.0,
+                  "range": 3,
+                  "cooldown": 2,
+                  "specialEffect": 3
+                }
+              ]
+            }

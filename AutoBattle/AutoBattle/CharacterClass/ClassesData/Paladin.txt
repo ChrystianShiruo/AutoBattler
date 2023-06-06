@@ -1,0 +1,16 @@
+json={
+              "characterClass": 1,
+              "hpModifier": 200.0,
+              "classDamage": 20.0,
+              "attackRange": 1,
+              "skills": [
+                {
+                  "name": "Patch up",
+                  "description": "heals self",
+                  "damage": 15.0,
+                  "range": 0,
+                  "cooldown": 1,
+                  "specialEffect": 3
+                }
+              ]
+            }

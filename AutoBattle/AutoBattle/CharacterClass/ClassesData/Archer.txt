@@ -1,0 +1,16 @@
+json={
+              "characterClass": 1,
+              "hpModifier": -20.0,
+              "classDamage": 40.0,
+              "attackRange": 3,
+              "skills": [
+                {
+                  "name": "Bleed",
+                  "description": "Make target bleed for 3 turns. counter resets if applied again",
+                  "damage": 15.0,
+                  "range": 3,
+                  "cooldown": 1,
+                  "specialEffect": 1
+                }
+              ]
+            }
