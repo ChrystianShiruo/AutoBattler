@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using System.Reflection;
-using System.Resources;
+﻿using System.Collections.Generic;
 
 namespace AutoBattle.Data
 {
@@ -92,10 +88,6 @@ namespace AutoBattle.Data
                 CharacterClassInfo classInfo = Newtonsoft.Json.JsonConvert.DeserializeObject<CharacterClassInfo>(classInfoJson);
                 infos.Add(classInfo);
             }
-
-
-
-
 
 
             return infos.ToArray();

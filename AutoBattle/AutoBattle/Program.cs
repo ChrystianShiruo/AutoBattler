@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Text;
 using static AutoBattle.Character;
-using static AutoBattle.Grid;
 using System.Collections.Generic;
 using System.Linq;
 
@@ -30,7 +29,6 @@ namespace AutoBattle
                 AliveCharacters = new List<Character>();
                 currentTurn = 0;
                 //caching Character classes for easy access
-                //characterClasses = CharacterClassUtils.GetCharacterClasses();
                 characterClasses = Data.CharacterClassInfoData.SetupClassesInfo();
                 CreateCharacters();
 
