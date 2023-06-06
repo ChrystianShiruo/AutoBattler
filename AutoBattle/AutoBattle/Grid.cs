@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
-using static AutoBattle.Types;
 
 namespace AutoBattle
 {
@@ -158,6 +157,20 @@ namespace AutoBattle
             }
 
             return _grid2D[newPosition.x, newPosition.y].position;
+        }
+
+        public class GridCell
+        {
+            public Character occupied;
+            public int Index;
+            public Vector2Int position;
+            public GridCell(int x, int y, Character occupied, int index)
+            {
+                this.occupied = occupied;
+                this.Index = index;
+                position = new Vector2Int(x, y);
+            }
+
         }
     }
 

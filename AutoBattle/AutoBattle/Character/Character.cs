@@ -2,27 +2,25 @@
 using System.Collections.Generic;
 using System.Text;
 using System.Linq;
-using static AutoBattle.Types;
 
 namespace AutoBattle
 {
-    public class Character
+    public class Character : ICharacter
     {
-
-
-        private float _baseDamage;
-        private float _damageMultiplier;
-        private int _attackRange;
-        private Character _target;
-        private Vector2Int[] _attackablePositions;
-        private Grid _grid;
-
-        public Character(CharacterClass characterClass, int id, ColorScheme color)
+        protected float _baseDamage;
+        protected float _damageMultiplier;
+        protected int _attackRange;
+        protected Character _target;
+        protected Vector2Int[] _attackablePositions;
+        protected Grid _grid;
+        protected CharacterClassInfo _characterClassInfo;
+        public Character(CharacterClassInfo characterClassInfo, int id, ColorScheme color)
         {
             Health = 100f;
             _baseDamage = 20f;
             PlayerIndex = id;
-            Name = $"{id}. {characterClass}";
+            _characterClassInfo = characterClassInfo;
+            Name = $"{id}. {characterClassInfo.characterClass}";
             _damageMultiplier = 1f;
             _attackRange = 1;
             _attackablePositions = CacheTargetablePositions(_attackRange);
@@ -30,14 +28,14 @@ namespace AutoBattle
             Color = (ConsoleColor)color;
         }
 
-        public int PlayerIndex { get; private set; }
-        public string Name { get; private set; }
-        public float Health { get; private set; }
-        public Vector2Int CurrentPosition { get; private set; }
-        public ConsoleColor Color { get; private set; }
+        public int PlayerIndex { get; protected set; }
+        public string Name { get; protected set; }
+        public float Health { get; protected set; }
+        public Vector2Int CurrentPosition { get; protected set; }
+        public ConsoleColor Color { get; protected set; }
 
         //caching so that we do not recalculate
-        private Vector2Int[] CacheTargetablePositions(int range)
+        protected Vector2Int[] CacheTargetablePositions(int range)
         {
             List<Vector2Int> targetablePositionsList = new List<Vector2Int>();
             //adding x and y axis for each range depth
@@ -70,7 +68,7 @@ namespace AutoBattle
             }
             return false;
         }
-        private int GetDamage()
+        protected int GetDamage()
         {
             return (int)(_baseDamage * _damageMultiplier);
         }
@@ -105,7 +103,7 @@ namespace AutoBattle
         }
 
         // Check in x and y directions if there is any character close enough to be a target.
-        private Character CheckCloseTargets(Grid battlefield)
+        protected Character CheckCloseTargets(Grid battlefield)
         {
             if(_target != null && _attackRange >= Vector2Int.Distance(_target.CurrentPosition, CurrentPosition))
             {
@@ -123,7 +121,7 @@ namespace AutoBattle
 
             return null;
         }
-        private Vector2Int FindNearestTargetPosition(Grid battlefield)
+        protected Vector2Int FindNearestTargetPosition(Grid battlefield)
         {
             Vector2Int targetPosition = CurrentPosition;
             int distance = Vector2Int.Distance(new Vector2Int(0, 0), new Vector2Int(battlefield.XLenght, battlefield.YLength));//max possible distance
@@ -143,7 +141,7 @@ namespace AutoBattle
 
             return targetPosition;
         }
-        private void MoveTowards(Vector2Int targetPosition, Grid battleField)//TODO: create & implement _movementRange
+        protected void MoveTowards(Vector2Int targetPosition, Grid battleField)//TODO: create & implement _movementRange
         {
             if(targetPosition == CurrentPosition)
             {
@@ -164,7 +162,7 @@ namespace AutoBattle
             }
         }
 
-        public void Attack(Character target)
+        protected void Attack(Character target)
         {
             var rand = new Random();
             float maxDamage = GetDamage();

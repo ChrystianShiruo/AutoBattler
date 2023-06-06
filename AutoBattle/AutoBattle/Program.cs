@@ -4,7 +4,6 @@ using static AutoBattle.Character;
 using static AutoBattle.Grid;
 using System.Collections.Generic;
 using System.Linq;
-using static AutoBattle.Types;
 
 namespace AutoBattle
 {
@@ -18,7 +17,7 @@ namespace AutoBattle
             int currentTurn;
             int numberOfPossibleTiles;
             int totalCharacterCount;
-            KeyValuePair<string, uint>[] characterClasses;
+            CharacterClassInfo[] characterClasses;
             Setup();
 
             void Setup()
@@ -26,40 +25,41 @@ namespace AutoBattle
                 totalCharacterCount = 2;
                 grid = GetGrid();
                 numberOfPossibleTiles = grid.XLenght * grid.YLength;
+
+
                 AliveCharacters = new List<Character>();
                 currentTurn = 0;
                 //caching Character classes for easy access
-                characterClasses = Types.GetCharacterClasses();
+                //characterClasses = CharacterClassUtils.GetCharacterClasses();
+                characterClasses = Data.CharacterClassInfoData.SetupClassesInfo();
                 CreateCharacters();
 
                 StartGame();
             }
 
-            CharacterClass GetPlayerChoice()
+            CharacterClassInfo GetPlayerChoice()
             {
                 Console.WriteLine("Choose Between One of this Classes:\n");
 
                 StringBuilder characterClassOptions = new StringBuilder();
 
-                foreach(KeyValuePair<string, uint> characterClass in characterClasses)
+                for(int i = 0; i < characterClasses.Length; i++)
                 {
-                    //string classNumber = ((uint)Enum.Parse(typeof(CharacterClass), characterClass.Key)).ToString();
-                    characterClassOptions.Append($"[{characterClass.Value}] {characterClass.Key}, ");
+                    characterClassOptions.Append($"[{(int)characterClasses[i].characterClass}] {characterClasses[i].characterClass}, ");
                 }
                 //removing ", " at the end
                 characterClassOptions.Remove(characterClassOptions.Length - 2, 2);
                 Console.WriteLine(characterClassOptions);
 
-                //store the player choice in a variable
                 string choice = Console.ReadLine();
 
                 UInt32 choiceInt = 0;
-                bool isValidValue = UInt32.TryParse(choice, out choiceInt) && Enum.IsDefined(typeof(CharacterClass), choiceInt);
+                bool isValidInt = UInt32.TryParse(choice, out choiceInt);
+                CharacterClassInfo selectedClass = characterClasses.First<CharacterClassInfo>(_ => (int)_.characterClass == choiceInt);
 
-                if(isValidValue)
+                if(isValidInt && selectedClass != null)
                 {
-                    //CreatePlayerCharacter((CharacterClass)UInt32.Parse(choice));                   
-                    return (CharacterClass)UInt32.Parse(choice);
+                    return selectedClass;
                 } else
                 {
                     Console.WriteLine($"Undefined class for value: {choice}");
@@ -104,10 +104,15 @@ namespace AutoBattle
                 CreateCharacter(GetPlayerChoice(), ColorScheme.Player);
                 CreateEnemyCharacter();
             }
-            void CreateCharacter(CharacterClass characterClass, ColorScheme color)
+            void CreateCharacter(CharacterClassInfo characterClassInfo, ColorScheme color)
             {
-                Console.WriteLine($"Character {AliveCharacters.Count} Class Choice: {characterClass}");
-                Character character = new Character(characterClass, AliveCharacters.Count, color);
+                Console.WriteLine($"Character {AliveCharacters.Count} Class Choice: {characterClassInfo.characterClass}");
+                Character character = new Character(characterClassInfo, AliveCharacters.Count, color);
+
+                
+                CharacterClassInfo c = Newtonsoft.Json.JsonConvert.DeserializeObject<CharacterClassInfo>("sdf");
+
+
                 AliveCharacters.Add(character);
             }
             void CreateEnemyCharacter()
@@ -115,7 +120,7 @@ namespace AutoBattle
                 var rand = new Random();
                 int randomInteger = rand.Next(1, characterClasses.Length);
 
-                CreateCharacter((CharacterClass)characterClasses[randomInteger].Value, ColorScheme.Enemy);
+                CreateCharacter(characterClasses[randomInteger], ColorScheme.Enemy);
             }
 
             void StartGame()
