@@ -110,9 +110,6 @@ namespace AutoBattle
                 Character character = new Character(characterClassInfo, AliveCharacters.Count, color);
 
                 
-                CharacterClassInfo c = Newtonsoft.Json.JsonConvert.DeserializeObject<CharacterClassInfo>("sdf");
-
-
                 AliveCharacters.Add(character);
             }
             void CreateEnemyCharacter()

@@ -17,15 +17,13 @@ namespace AutoBattle
         Cleric = 3,
         Archer = 4
     }
-    [Serializable]public class CharacterClassInfo
+    [Serializable] public class CharacterClassInfo
     {
         public CharacterClass characterClass;
-        //Character CharacterClass;
         public float hpModifier;
         public float classDamage;
         public int attackRange;
         public CharacterSkills[] skills;
-
     }
 
     public struct CharacterSkills
@@ -36,20 +34,5 @@ namespace AutoBattle
         public int range;
         public SpecialEffect specialEffect;
     }
-    
-    //public class CharacterClassUtils
-    //{
-    //    public static KeyValuePair<string, uint>[] GetCharacterClasses()
-    //    {
-    //        List<KeyValuePair<string, uint>> classList = new List<KeyValuePair<string, uint>>();
 
-    //        string[] characterClassNames = Enum.GetNames(typeof(CharacterClass));
-    //        foreach(string name in characterClassNames)
-    //        {
-    //            classList.Add(new KeyValuePair<string, uint>(name, (uint)Enum.Parse(typeof(CharacterClass), name)));
-    //        }
-
-    //        return classList.ToArray();
-    //    }
-    //}
 }

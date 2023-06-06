@@ -1,5 +1,5 @@
 json={
-              "characterClass": 1,
+              "characterClass": 2,
               "hpModifier": 100.0,
               "classDamage": 45.0,
               "attackRange": 1,
