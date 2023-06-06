@@ -5,7 +5,7 @@ namespace AutoBattle.Data
     public class CharacterClassInfoData
     {
 
-        readonly public static List<string> ClassesJson = new List<string>() {
+        readonly private static List<string> ClassesJson = new List<string>() {
 
             //Paladin
             @"{

@@ -104,10 +104,11 @@ namespace AutoBattle
             }
             void CreateCharacter(CharacterClassInfo characterClassInfo, ColorScheme color)
             {
-                Console.WriteLine($"Character {AliveCharacters.Count} Class Choice: {characterClassInfo.characterClass}");
                 Character character = new Character(characterClassInfo, AliveCharacters.Count, color);
+                //Console.WriteLine($"Character {AliveCharacters.Count} Class Choice: {characterClassInfo.characterClass}");
+                Console.WriteLine($"Created  {character.Name} || hp:{character.Health} || MaxDamage:{character.MaxDamage} || Range:{character.AttackRange}");
 
-                
+
                 AliveCharacters.Add(character);
             }
             void CreateEnemyCharacter()

@@ -7,21 +7,20 @@ namespace AutoBattle
     {
         protected float _baseDamage;
         protected float _damageMultiplier;
-        protected int _attackRange;
         protected Character _target;
         protected Vector2Int[] _attackablePositions;
         protected Grid _grid;
         protected CharacterClassInfo _characterClassInfo;
         public Character(CharacterClassInfo characterClassInfo, int id, ColorScheme color)
         {
-            Health = 100f;
-            _baseDamage = 20f;
+            Health = 100f + characterClassInfo.hpModifier;
             PlayerIndex = id;
-            _characterClassInfo = characterClassInfo;
-            Name = $"{id}. {characterClassInfo.characterClass}";
             _damageMultiplier = 1f;
-            _attackRange = 1;
-            _attackablePositions = CacheTargetablePositions(_attackRange);
+            _characterClassInfo = characterClassInfo;
+            _baseDamage = characterClassInfo.classDamage;
+            Name = $"{id}. {characterClassInfo.characterClass}";
+            AttackRange = characterClassInfo.attackRange;
+            _attackablePositions = CacheTargetablePositions(AttackRange);
             _grid = null;
             Color = (ConsoleColor)color;
         }
@@ -29,6 +28,8 @@ namespace AutoBattle
         public int PlayerIndex { get; protected set; }
         public string Name { get; protected set; }
         public float Health { get; protected set; }
+        public float MaxDamage { get => GetDamage(); }
+        public int AttackRange { get; protected set; }
         public Vector2Int CurrentPosition { get; protected set; }
         public ConsoleColor Color { get; protected set; }
 
@@ -103,7 +104,7 @@ namespace AutoBattle
         // Check in x and y directions if there is any character close enough to be a target.
         protected Character CheckCloseTargets(Grid battlefield)
         {
-            if(_target != null && _attackRange >= Vector2Int.Distance(_target.CurrentPosition, CurrentPosition))
+            if(_target != null && AttackRange >= Vector2Int.Distance(_target.CurrentPosition, CurrentPosition))
             {
                 return _target;
             }
