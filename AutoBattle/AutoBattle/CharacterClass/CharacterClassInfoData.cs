@@ -1,19 +1,21 @@
 ﻿using System.Collections.Generic;
 
+
 namespace AutoBattle.Data
 {
     public class CharacterClassInfoData
     {
-
-        readonly private static List<string> ClassesJson = new List<string>() {
+        //Manual setup because I was taking too long to setup .Resources
+        readonly private static List<string> classesJson = new List<string>() {
 
             //Paladin
             @"{
-              ""characterClass"": 1,
-              ""hpModifier"": 200.0,
-              ""classDamage"": 20.0,
-              ""attackRange"": 1,
-              ""skills"": [
+              ""Id"": 1,
+              ""Name"": ""Paladin"",
+              ""HpModifier"": 200.0,
+              ""ClassDamage"": 20.0,
+              ""AttackRange"": 1,
+              ""Skills"": [
                 {
                   ""name"": ""Patch up"",
                   ""description"": ""heals self"",
@@ -26,11 +28,12 @@ namespace AutoBattle.Data
             }",
             //Warrior
             @"{
-              ""characterClass"": 2,
-              ""hpModifier"": 100.0,
-              ""classDamage"": 45.0,
-              ""attackRange"": 1,
-              ""skills"": [
+              ""Id"": 2,
+              ""Name"": ""Warrior"",
+              ""HpModifier"": 100.0,
+              ""ClassDamage"": 45.0,
+              ""AttackRange"": 1,
+              ""Skills"": [
                 {
                   ""name"": ""Knock Down"",
                   ""description"": ""Opponent cannot take any actions next turn"",
@@ -43,11 +46,12 @@ namespace AutoBattle.Data
             }",
             //Cleric
             @"{
-              ""characterClass"": 3,
-              ""hpModifier"": 50.0,
-              ""classDamage"": 30.0,
-              ""attackRange"": 1,
-              ""skills"": [
+              ""Id"": 3,
+              ""Name"": ""Cleric"",
+              ""HpModifier"": 50.0,
+              ""ClassDamage"": 30.0,
+              ""AttackRange"": 1,
+              ""Skills"": [
                 {
                   ""name"": ""Heal"",
                   ""description"": ""Heal lowest healt ally"",
@@ -60,11 +64,12 @@ namespace AutoBattle.Data
             }",
             //Archer
             @"{
-              ""characterClass"": 4,
-              ""hpModifier"": -20.0,
-              ""classDamage"": 40.0,
-              ""attackRange"": 3,
-              ""skills"": [
+              ""Id"": 4,
+              ""Name"": ""Archer"",
+              ""HpModifier"": -20.0,
+              ""ClassDamage"": 40.0,
+              ""AttackRange"": 3,
+              ""Skills"": [
                 {
                   ""name"": ""Bleed"",
                   ""description"": ""Make target bleed for 3 turns. counter resets if applied again"",
@@ -77,15 +82,24 @@ namespace AutoBattle.Data
             }"
 
         };
-
+        
 
         public static CharacterClassInfo[] SetupClassesInfo()
         {
+
             List<CharacterClassInfo> infos = new List<CharacterClassInfo>();
 
-            foreach(string classInfoJson in ClassesJson)
+            CharacterClassInfo se = new CharacterClassInfo();//testing and checking generated json
+            //se.characterChild = new CharacterArcher();
+            Newtonsoft.Json.JsonSerializerSettings serializerSettings = new Newtonsoft.Json.JsonSerializerSettings();
+            serializerSettings.NullValueHandling = Newtonsoft.Json.NullValueHandling.Ignore;
+            serializerSettings.TypeNameHandling = Newtonsoft.Json.TypeNameHandling.Auto;
+            string s = Newtonsoft.Json.JsonConvert.SerializeObject(se, serializerSettings);
+
+            //TODO: Create intermediary class to receive json values and pass onto class, so I can change CharacterClassInfo fields set access back to protected, do the same for StatusEffectData.cs
+            foreach(string classInfoJson in classesJson)
             {
-                CharacterClassInfo classInfo = Newtonsoft.Json.JsonConvert.DeserializeObject<CharacterClassInfo>(classInfoJson);
+                CharacterClassInfo classInfo = Newtonsoft.Json.JsonConvert.DeserializeObject<CharacterClassInfo>(classInfoJson/*, serializerSettings*/);
                 infos.Add(classInfo);
             }
 

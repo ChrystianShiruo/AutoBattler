@@ -10,23 +10,31 @@ namespace AutoBattle
         protected Character _target;
         protected Vector2Int[] _attackablePositions;
         protected Grid _grid;
-        protected CharacterClassInfo _characterClassInfo;
+        protected List<IStatusEffect> _statuses;
+        protected float _maxHp;
+
         public Character(CharacterClassInfo characterClassInfo, int id, ColorScheme color, int teamId)
         {
-            Health = 100f + characterClassInfo.hpModifier;
+            _maxHp = 100f + characterClassInfo.HpModifier;
+            Health = _maxHp;
             PlayerIndex = id;
             _damageMultiplier = 1f;
-            _characterClassInfo = characterClassInfo;
-            _baseDamage = characterClassInfo.classDamage;
-            Name = $"{id}. {characterClassInfo.characterClass}";
-            AttackRange = characterClassInfo.attackRange;
+            CharacterClassInfo = characterClassInfo;
+            _baseDamage = characterClassInfo.ClassDamage;
+            Name = $"{id}. {characterClassInfo.Name}";
+            AttackRange = characterClassInfo.AttackRange;
             _attackablePositions = CacheTargetablePositions(AttackRange);
+            _statuses = new List<IStatusEffect>();
 
             Team = teamId;
             _grid = null;
             Color = (ConsoleColor)color;
         }
+        //public Character()
+        //{
 
+        //}
+        protected bool _incapacitated => _statuses.Exists(statusE => statusE._Status == Status.Stun);
         public int PlayerIndex { get; protected set; }
         public string Name { get; protected set; }
         public float Health { get; protected set; }
@@ -35,6 +43,9 @@ namespace AutoBattle
         public int Team { get; protected set; }
         public Vector2Int CurrentPosition { get; protected set; }
         public ConsoleColor Color { get; protected set; }
+        public Action OnTurnStart { get; set; }
+        public CharacterClassInfo CharacterClassInfo { get; set; }
+
 
         //caching so that we do not recalculate
         protected Vector2Int[] CacheTargetablePositions(int range)
@@ -58,8 +69,18 @@ namespace AutoBattle
             }
         }
 
+        public void HealDamage(float amount)
+        {
+            float max = _maxHp - Health;
+            amount = amount > max ? max : amount;
+            Messages.ColoredWriteLine($"Character {Name} was healed for {amount} is now with {Health} hp", Color);
+        }
         public bool TakeDamage(float amount)
         {
+            if(amount < 0)
+            {
+                return false;
+            }
             Health -= amount;
             Messages.ColoredWriteLine($"Character {Name} is now with {Math.Max(Health, 0)} hp", Color);
 
@@ -83,10 +104,23 @@ namespace AutoBattle
             }
         }
 
-
-        public void StartTurn()
+        public void RemoveStatus(IStatusEffect statusEffect)
         {
-            if(Health <= 0)
+            Messages.ColoredWriteLine($"Removed {statusEffect._Status} from {Name}!", Color);
+            _statuses.Remove(statusEffect);
+        }
+        public void AddStatus(IStatusEffect statusEffect)
+        {
+            Messages.ColoredWriteLine($"Added {statusEffect._Status} to {Name}!", Color);
+            _statuses.Add(statusEffect);
+            statusEffect.OnApply(this);
+        }
+
+        public virtual void StartTurn()
+        {
+            OnTurnStart?.Invoke();
+
+            if(Health <= 0 || _incapacitated)
             {
                 return;
             }
@@ -99,6 +133,11 @@ namespace AutoBattle
             {
                 Messages.ColoredWriteLine($"{Name} Is idle.", Color);
             }
+            if(_target != null)
+            {
+                TryToUseSkills();
+            }
+
 
             Messages.ColoredWriteLine($"{Name} finished his turn.", Color);
 
@@ -107,7 +146,7 @@ namespace AutoBattle
         // Check in x and y directions if there is any character close enough to be a target.
         protected Character CheckCloseTargets(Grid battlefield)
         {
-            if(_target != null && _target.Health > 0  && AttackRange >= Vector2Int.Distance(_target.CurrentPosition, CurrentPosition))
+            if(_target != null && _target.Health > 0 && AttackRange >= Vector2Int.Distance(_target.CurrentPosition, CurrentPosition))
             {
                 return _target;
             }
@@ -178,6 +217,36 @@ namespace AutoBattle
             Console.Write($" and did {damageDealt} damage \n");
 
             target.TakeDamage(damageDealt);
+        }
+
+        private void TryToUseSkills()
+        {
+            foreach(CharacterSkills skill in CharacterClassInfo.Skills)
+            {
+                StatusEffect statusEffect;
+                Data.StatusEffectData.StatusEffects.TryGetValue(skill.specialEffect, out statusEffect);
+                if(statusEffect != null && _target != null)
+                {
+                    //switch(skill.specialEffect)
+                    //{
+                    //    case Status.Bleed:
+                    //        statusEffect = new Bleed();
+                    //        statusEffect.StatusValue;
+                    //        break;
+                    //    case Status.Stun:
+                    //        break;
+                    //    case Status.Heal:
+                    //        break;
+                    //}
+                    statusEffect.Target = _target;
+                    statusEffect.StatusValue = skill.damage;
+                    //statusEffect.StatusValue = skill.damage;
+
+                    statusEffect.OnApply(_target);
+                    //statusEffect.OnApply(this);
+                }
+
+            }
         }
 
         public enum ColorScheme

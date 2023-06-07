@@ -8,10 +8,10 @@ namespace AutoBattle
 {
     class Program
     {
-        private static List<Character> CharacterOrder { get; set; }
+        private static List<Character> CharacterOrder { get; set; }// TODO: Consider using ICharacter instead
 
         //probably more efficient to have both list than to iterate through CharacterOrder all the time we need Teams 
-        public static List<Character>[] TeamCharacters { get; private set; }
+        public static List<Character>[] TeamCharacters { get; private set; }// TODO: Consider using ICharacter instead
 
         static void Main(string[] args)
         {
@@ -20,17 +20,19 @@ namespace AutoBattle
             int currentTurn;
             int teamSizeLimit;
             CharacterClassInfo[] characterClasses;
+            IStatusEffect[] statusEffects;
             int totalCharacterCount = 0;
             Setup();
 
             void Setup()
             {
+                statusEffects = Data.StatusEffectData.SetupStatusEffects();
+                characterClasses = Data.CharacterClassInfoData.SetupClassesInfo();
+
                 TeamCharacters = new List<Character>[2] { new List<Character>(), new List<Character>() };
                 teamSizeLimit = 5;
                 //caching Character classes for easy access
-                characterClasses = Data.CharacterClassInfoData.SetupClassesInfo();
                 CreateCharacters();
-
 
 
 
@@ -48,7 +50,7 @@ namespace AutoBattle
 
                 for(int i = 0; i < characterClasses.Length; i++)
                 {
-                    characterClassOptions.Append($"[{(int)characterClasses[i].characterClass}] {characterClasses[i].characterClass}, ");
+                    characterClassOptions.Append($"[{(int)characterClasses[i].Id}] {characterClasses[i].Name}, ");
                 }
                 //removing ", " at the end
                 characterClassOptions.Remove(characterClassOptions.Length - 2, 2);
@@ -58,7 +60,7 @@ namespace AutoBattle
 
                 UInt32 choiceInt = 0;
                 bool isValidInt = UInt32.TryParse(choice, out choiceInt);
-                CharacterClassInfo selectedClass = characterClasses.First<CharacterClassInfo>(_ => (int)_.characterClass == choiceInt);
+                CharacterClassInfo selectedClass = characterClasses.First<CharacterClassInfo>(classInfo => (uint) classInfo.Id == choiceInt);
 
                 if(isValidInt && selectedClass != null)
                 {
@@ -121,7 +123,25 @@ namespace AutoBattle
             }
             void CreateCharacter(CharacterClassInfo characterClassInfo, ColorScheme color, int teamId)
             {
-                Character character = new Character(characterClassInfo, totalCharacterCount, color, teamId);
+                Character character;
+                switch(characterClassInfo.Id)// :/
+                {
+                    case CharacterClass.Paladin:
+                        character = new CharacterPaladin(characterClassInfo, totalCharacterCount, color, teamId);
+                        break;
+                    case CharacterClass.Warrior:
+                        character = new CharacterWarrior(characterClassInfo, totalCharacterCount, color, teamId);
+                        break;
+                    case CharacterClass.Cleric:
+                        character = new CharacterCleric(characterClassInfo, totalCharacterCount, color, teamId);
+                        break;
+                    case CharacterClass.Archer:
+                        character = new CharacterArcher(characterClassInfo, totalCharacterCount, color, teamId);
+                        break;
+                    default:
+                        character = new Character(characterClassInfo, totalCharacterCount, color, teamId);
+                        break;
+                }
                 Messages.ColoredWriteLine($"Created {character.Name} for Team {character.Team} || hp:{character.Health} || MaxDamage:{character.MaxDamage} || Range:{character.AttackRange}", character.Color);
 
 
