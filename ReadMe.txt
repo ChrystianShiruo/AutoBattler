@@ -1,4 +1,20 @@
-﻿# Kokku Software Engineer Applicant Test
+
+ChrystianShiruo Observations:
+ -CharacterClasses branch contains some interesting stuff with Status Effects but is still Work In Progress, it IS working but it is not fully polished or implemented;
+ -master contains a cleaner, more polished project with basic requirements + Team battles;
+ -Commit comments provide some insight on the process;
+ -Used Newtonsoft.json to simulate data files for classes, skills and Status Effects;
+
+
+
+
+
+
+
+================================================================================
+
+
+# Kokku Software Engineer Applicant Test
 
 
 ## Auto Battle RPG
