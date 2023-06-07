@@ -11,7 +11,7 @@ namespace AutoBattle
         protected Vector2Int[] _attackablePositions;
         protected Grid _grid;
         protected CharacterClassInfo _characterClassInfo;
-        public Character(CharacterClassInfo characterClassInfo, int id, ColorScheme color)
+        public Character(CharacterClassInfo characterClassInfo, int id, ColorScheme color, int teamId)
         {
             Health = 100f + characterClassInfo.hpModifier;
             PlayerIndex = id;
@@ -21,6 +21,8 @@ namespace AutoBattle
             Name = $"{id}. {characterClassInfo.characterClass}";
             AttackRange = characterClassInfo.attackRange;
             _attackablePositions = CacheTargetablePositions(AttackRange);
+
+            Team = teamId;
             _grid = null;
             Color = (ConsoleColor)color;
         }
@@ -30,6 +32,7 @@ namespace AutoBattle
         public float Health { get; protected set; }
         public float MaxDamage { get => GetDamage(); }
         public int AttackRange { get; protected set; }
+        public int Team { get; protected set; }
         public Vector2Int CurrentPosition { get; protected set; }
         public ConsoleColor Color { get; protected set; }
 
@@ -92,11 +95,11 @@ namespace AutoBattle
             if(_target != null)
             {
                 Attack(_target);
-                return;
-            } else
+            } else if(!MoveTowards(FindNearestTargetPosition(_grid), _grid))
             {
-                MoveTowards(FindNearestTargetPosition(_grid), _grid);
+                Messages.ColoredWriteLine($"{Name} Is idle.", Color);
             }
+
             Messages.ColoredWriteLine($"{Name} finished his turn.", Color);
 
         }
@@ -104,7 +107,7 @@ namespace AutoBattle
         // Check in x and y directions if there is any character close enough to be a target.
         protected Character CheckCloseTargets(Grid battlefield)
         {
-            if(_target != null && AttackRange >= Vector2Int.Distance(_target.CurrentPosition, CurrentPosition))
+            if(_target != null && _target.Health > 0  && AttackRange >= Vector2Int.Distance(_target.CurrentPosition, CurrentPosition))
             {
                 return _target;
             }
@@ -112,7 +115,7 @@ namespace AutoBattle
             foreach(Vector2Int position in _attackablePositions)
             {
                 Character target = battlefield.GetCellCharacter(CurrentPosition.x + position.x, CurrentPosition.y + position.y);
-                if(target != null)
+                if(target != null && target.Team != Team)
                 {
                     return target;
                 }
@@ -124,7 +127,7 @@ namespace AutoBattle
         {
             Vector2Int targetPosition = CurrentPosition;
             int distance = Vector2Int.Distance(new Vector2Int(0, 0), new Vector2Int(battlefield.XLenght, battlefield.YLength));//max possible distance
-            foreach(Character character in Program.AliveCharacters)
+            foreach(Character character in Program.TeamCharacters[Team == 1 ? 0 : 1])
             {
                 if(character == this)
                 {
@@ -140,11 +143,11 @@ namespace AutoBattle
 
             return targetPosition;
         }
-        protected void MoveTowards(Vector2Int targetPosition, Grid battleField)//TODO: create & implement _movementRange
+        protected bool MoveTowards(Vector2Int targetPosition, Grid battleField)//TODO: create & implement _movementRange; smarter AI pathing to coordinate?
         {
             if(targetPosition == CurrentPosition)
             {
-                return;
+                return false;
             }
 
             Vector2Int candidatePosition = battleField.MoveTowards(CurrentPosition, targetPosition, 1);
@@ -155,8 +158,10 @@ namespace AutoBattle
 
                 CurrentPosition = candidatePosition;
                 battleField.OnBattlefieldChanged();
+                return true;
             } else
             {
+                return false;
                 //did not move
             }
         }

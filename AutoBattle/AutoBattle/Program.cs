@@ -8,30 +8,35 @@ namespace AutoBattle
 {
     class Program
     {
-        public static List<Character> AliveCharacters { get; private set; }
+        private static List<Character> CharacterOrder { get; set; }
+
+        //probably more efficient to have both list than to iterate through CharacterOrder all the time we need Teams 
+        public static List<Character>[] TeamCharacters { get; private set; }
+
         static void Main(string[] args)
         {
             Grid grid;
 
             int currentTurn;
-            int numberOfPossibleTiles;
-            int totalCharacterCount;
+            int teamSizeLimit;
             CharacterClassInfo[] characterClasses;
+            int totalCharacterCount = 0;
             Setup();
 
             void Setup()
             {
-                totalCharacterCount = 2;
-                grid = GetGrid();
-                numberOfPossibleTiles = grid.XLenght * grid.YLength;
-
-
-                AliveCharacters = new List<Character>();
-                currentTurn = 0;
+                TeamCharacters = new List<Character>[2] { new List<Character>(), new List<Character>() };
+                teamSizeLimit = 5;
                 //caching Character classes for easy access
                 characterClasses = Data.CharacterClassInfoData.SetupClassesInfo();
                 CreateCharacters();
 
+
+
+
+                grid = GetGrid();
+
+                currentTurn = 0;
                 StartGame();
             }
 
@@ -75,6 +80,8 @@ namespace AutoBattle
                 GetUint("Select Line count:", out x);
                 GetUint("Select Collumn count:", out y);
 
+
+
                 if(x * y < totalCharacterCount)
                 {
                     Console.WriteLine($"battlefield is too small for {totalCharacterCount} characters.\n");
@@ -83,45 +90,55 @@ namespace AutoBattle
 
                 return new Grid((int)x, (int)y);
 
-                void GetUint(string requestText, out uint i)
-                {
-                    while(true)
-                    {
-                        Console.WriteLine(requestText);
-                        string xInput = Console.ReadLine();
-                        if(uint.TryParse(xInput, out i))
-                            break;
-                        else Console.WriteLine($"{xInput} is an invalid value, please input a positive integer");
-                    }
-                }
             }
+
 
 
             void CreateCharacters()
             {
-                CreateCharacter(GetPlayerChoice(), ColorScheme.Player);
-                CreateEnemyCharacter();
+                uint teamSize;
+                GetUint($"Select team size (must be between 1 and {teamSizeLimit}):", out teamSize);
+
+                if(teamSize < 1 || teamSize > teamSizeLimit)
+                {
+                    Console.WriteLine($"Team size cannot be {teamSize}, select a value between 1 and {teamSizeLimit}");
+                    CreateCharacters();
+                }
+
+                int playerTeam = 0;
+                CreateCharacter(GetPlayerChoice(), ColorScheme.Player, playerTeam);
+
+                var rand = new Random();
+                for(int teamsI = 0; teamsI < TeamCharacters.Length; teamsI++)
+                {
+                    while(TeamCharacters[teamsI].Count < teamSize)
+                    {
+                        int randomInteger = rand.Next(1, characterClasses.Length);
+                        CreateCharacter(characterClasses[randomInteger], teamsI == playerTeam ? ColorScheme.Ally : ColorScheme.Enemy, teamsI);
+                    }
+                }
+
             }
-            void CreateCharacter(CharacterClassInfo characterClassInfo, ColorScheme color)
+            void CreateCharacter(CharacterClassInfo characterClassInfo, ColorScheme color, int teamId)
             {
-                Character character = new Character(characterClassInfo, AliveCharacters.Count, color);
-                //Console.WriteLine($"Character {AliveCharacters.Count} Class Choice: {characterClassInfo.characterClass}");
-                Console.WriteLine($"Created  {character.Name} || hp:{character.Health} || MaxDamage:{character.MaxDamage} || Range:{character.AttackRange}");
+                Character character = new Character(characterClassInfo, totalCharacterCount, color, teamId);
+                Messages.ColoredWriteLine($"Created {character.Name} for Team {character.Team} || hp:{character.Health} || MaxDamage:{character.MaxDamage} || Range:{character.AttackRange}", character.Color);
 
 
-                AliveCharacters.Add(character);
+                TeamCharacters[teamId].Add(character);
+                totalCharacterCount++;
             }
             void CreateEnemyCharacter()
             {
                 var rand = new Random();
                 int randomInteger = rand.Next(1, characterClasses.Length);
 
-                CreateCharacter(characterClasses[randomInteger], ColorScheme.Enemy);
+                CreateCharacter(characterClasses[randomInteger], ColorScheme.Enemy, 1);
             }
 
             void StartGame()
             {
-                AlocatePlayers();
+                OrderPlayers();
                 grid.OnBattlefieldChanged();
                 StartTurn();
             }
@@ -137,7 +154,7 @@ namespace AutoBattle
                 currentTurn++;
 
                 Console.WriteLine($"\nStarting turn {currentTurn}...");
-                AliveCharacters.ForEach(character => character.StartTurn());
+                CharacterOrder.ForEach(character => character.StartTurn());
 
 
                 HandleTurn();
@@ -146,13 +163,24 @@ namespace AutoBattle
             void HandleTurn()
             {
                 UpdateAliveCharacters();
-                if(AliveCharacters.Count <= 1)
+                List<int> teamsLeft = new List<int>();
+                for(int i = 0; i < TeamCharacters.Length; i++)
+                {
+                    if(TeamCharacters[i].Count > 0)
+                    {
+                        teamsLeft.Add(i);
+                    }
+                }
+
+                if(teamsLeft.Count <= 1)
                 {
                     string winnerMessage = string.Empty;
-                    if(AliveCharacters.Count == 1)
+                    if(teamsLeft.Count == 1)
                     {
-                        winnerMessage = $"{AliveCharacters[0].Name}  with {AliveCharacters[0].Health} hp left!";
-                        Console.ForegroundColor = AliveCharacters[0].Color;
+                        winnerMessage = $"TEAM {teamsLeft[0]}!";
+                        Console.ForegroundColor = TeamCharacters[teamsLeft[0]][0].Color;
+                        //winnerMessage = $"{TeamCharacters[0].Name}  with {TeamCharacters[0].Health} hp left!";
+                        //Console.ForegroundColor = TeamCharacters[0].Color;
                     } else
                     {
                         winnerMessage = "No one!?";
@@ -167,49 +195,45 @@ namespace AutoBattle
                     return;
                 }
                 Console.WriteLine($"Turn {currentTurn} summary: \n");
-                foreach(Character character in AliveCharacters)
+                foreach(List<Character> team in TeamCharacters)
                 {
-                    Messages.ColoredWriteLine($"{character.Name} hp: { character.Health.ToString("F2")}", character.Color);
+                    foreach(Character character in team)
+                    {
+                        Messages.ColoredWriteLine($"{character.Name} hp: { character.Health.ToString("F2")}", character.Color);
+                    }
                 }
-               
                 StartTurn();
 
             }
             void UpdateAliveCharacters()
             {
-                List<Character> newCharacterList = new List<Character>(AliveCharacters);
-                foreach(Character character in AliveCharacters)
+                List<Character> newCharacterList = new List<Character>(CharacterOrder);
+                foreach(Character character in CharacterOrder)
                 {
                     if(character.Health <= 0)
                     {
                         newCharacterList.Remove(character);
+                        TeamCharacters[character.Team].Remove(character);
                     }
                 }
-                AliveCharacters = newCharacterList;
+                CharacterOrder = newCharacterList;
             }
 
-            List<T> Shuffle<T>(List<T> list)
+            void OrderPlayers()
             {
-
-                List<T> temp = new List<T>();
-
-                Random rand = new Random();
-                for(int i = list.Count; i > 0; i--)
+                List<Character> allCharacters = new List<Character>();
+                foreach(List<Character> cl in TeamCharacters)
                 {
-                    int randomValue = rand.Next(0, i);
-                    temp.Add(list[randomValue]);
-                    list.RemoveAt(randomValue);
-                }
+                    allCharacters.AddRange(cl);
+                };
+                CharacterOrder = allCharacters;
 
-                return temp;
-            }
-
-            void AlocatePlayers()
-            {
                 Console.WriteLine("Shuffling character order...\n");
                 //Randomizing characters order
-                AliveCharacters = Shuffle(AliveCharacters);
-                AliveCharacters.ForEach(character => AllocatePlayers(character));
+                CharacterOrder = Shuffle(allCharacters);
+
+
+                CharacterOrder.ForEach(character => AllocatePlayers(character));
             }
             void AllocatePlayers(Character character)
             {
@@ -228,6 +252,37 @@ namespace AutoBattle
                     AllocatePlayers(character);
                 }
             }
+
+            #region Utils
+            void GetUint(string requestText, out uint i)
+            {
+                while(true)
+                {
+                    Console.WriteLine(requestText);
+                    string xInput = Console.ReadLine();
+                    if(uint.TryParse(xInput, out i))
+                        break;
+                    else Console.WriteLine($"{xInput} is an invalid value, please input a positive integer");
+                }
+            }
+
+            List<T> Shuffle<T>(List<T> list)
+            {
+
+                List<T> temp = new List<T>();
+
+                Random rand = new Random();
+                for(int i = list.Count; i > 0; i--)
+                {
+                    int randomValue = rand.Next(0, i);
+                    temp.Add(list[randomValue]);
+                    list.RemoveAt(randomValue);
+                }
+
+                return temp;
+            }
+            #endregion
+
 
         }
     }
